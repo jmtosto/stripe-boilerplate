@@ -1,0 +1,85 @@
+enum SubscriptionStatus {
+  trialing
+  active
+  canceled
+  incomplete
+  incomplete_expired
+  past_due
+  unpaid
+}
+
+model Subscription {
+  id                 String             @id @default(uuid())
+  externalId         String?            @unique
+  metadata           Json?
+  status             SubscriptionStatus
+  quantity           Int
+  cancelAtPeriodEnd  Boolean?
+  cancelAt           DateTime?
+  canceledAt         DateTime?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  createdAt          DateTime           @default(now())
+  endedAt            DateTime?
+  trialStart         DateTime?
+  trialEnd           DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  priceId String
+  price   PlanPrice @relation(fields: [priceId], references: [id])
+
+  @@map("subscriptions")
+}
+
+model Plan {
+  id          String   @id @default(uuid())
+  externalId  String?  @unique
+  active      Boolean  @default(true)
+  name        String
+  description String
+  image       String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  prices PlanPrice[]
+
+  @@map("plans")
+}
+
+enum PlanPriceInterval {
+  day
+  week
+  month
+  year
+}
+
+enum PlanPriceType {
+  one_time
+  recurring
+}
+
+model PlanPrice {
+  id              String            @id @default(uuid())
+  externalId      String?           @unique
+  description     String?
+  unitAmount      Int?
+  currency        String            @default("brl")
+  type            PlanPriceType
+  interval        PlanPriceInterval
+  intervalCount   Int?
+  trialPeriodDays Int?
+  metadata        Json?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  active       Boolean        @default(true)
+  subscription Subscription[]
+
+  @@map("plan_prices")
+}
